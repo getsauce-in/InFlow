@@ -24,7 +24,7 @@ It takes the philosophy of structured time-blocking and amplifies it with a dedi
 
 ---
 
-## 🌊 Philosophy
+## Philosophy
 
 In a world of constant distraction, **InFlow** provides a sanctuary for focus. Unlike traditional calendar apps that visualize time as a scarce resource to be managed, InFlow visualizes time as a **stream of focus**.
 
@@ -37,7 +37,7 @@ InFlow helps you:
 
 ---
 
-## ✨ Features
+## Features
 
 ### 🎯 Session-Based Workflow
 Build your daily routine using modular "Blocks". Whether it's *Deep Work*, *Meditation*, or a *Quick Break*, your day is your own.
@@ -49,7 +49,7 @@ Build your daily routine using modular "Blocks". Whether it's *Deep Work*, *Medi
 *   **Drag & Drop Ordering**: Fluidly rearrange your day as priorities shift.
 *   **Template Library**: Save your perfect morning routine and reuse it instantly. (Coming Soon)
 
-### 🎨 Adaptive Aesthetics
+### Adaptive Aesthetics
 Your environment shapes your mindset. InFlow features a state-of-the-art design engine with selectable themes to match your cognitive state.
 
 <div align="center">
@@ -60,12 +60,12 @@ Your environment shapes your mindset. InFlow features a state-of-the-art design 
 *   **Glassmorphism UI**: Modern, translucent layers providing context without clutter.
 *   **Custom Color Accents**: From *Cyberpunk Cyan* to *Zen Green*.
 
-### ⚡ Performance First
+### Performance First
 Built with a lightweight Python core, InFlow respects your system resources. It runs silently in the background, consuming minimal RAM so your heavy tools have room to breathe.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 *   Windows, macOS, or Linux
@@ -86,7 +86,7 @@ python main.py
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We believe in open ecosystems. If you're a developer, designer, or productivity enthusiast, come build with us.
 
