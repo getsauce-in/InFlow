@@ -14,7 +14,9 @@
 <br />
 <br />
 
-**InFlow** is a desktop-first productivity environment inspired by *The Sessions*. It is designed to minimize friction and maximize deep work through a structured, session-based workflow.
+**InFlow** is a desktop-first productivity environment designed to minimize friction and maximize deep work through a structured, session-based workflow.
+
+It takes the philosophy of structured time-blocking and amplifies it with a dedicated, immersive desktop experience, allowing you to orchestrate your day with precision and flow.
 
 [Features](#-features) • [Installation](#-installation) • [Contributing](#-contributing)
 
