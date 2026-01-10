@@ -4,7 +4,7 @@
 ### Your Flow State, Engineered.
 
 ![Version](https://img.shields.io/badge/version-1.0.2-blue.svg?style=for-the-badge)
-![Platform](https://img.shields.io/badge/platform-Windows-0078D6.svg?style=for-the-badge)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
 
 <br />
@@ -66,7 +66,7 @@ Built with a lightweight Python core, InFlow respects your system resources. It 
 ## 🚀 Installation
 
 ### Prerequisites
-*   Windows 10/11
+*   Windows, macOS, or Linux
 *   Python 3.10+
 
 ### Quick Start
