@@ -39,7 +39,7 @@ InFlow helps you:
 
 ## Features
 
-### 🎯 Session-Based Workflow
+### Session-Based Workflow
 Build your daily routine using modular "Blocks". Whether it's *Deep Work*, *Meditation*, or a *Quick Break*, your day is your own.
 
 <div align="center">
