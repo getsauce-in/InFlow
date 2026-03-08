@@ -12,6 +12,7 @@ class BlockItem:
     streak: int = 0
     total_minutes: int = 0
     is_completed: bool = False
+    last_completed_date: str = None
 
 class BlocksManager:
     def __init__(self):
@@ -29,20 +30,79 @@ class BlocksManager:
             duration=d['duration_minutes'],
             icon=d['icon'],
             streak=d.get('current_streak', 0),
-            total_minutes=d.get('total_minutes', 0)
+            total_minutes=d.get('total_minutes', 0),
+            last_completed_date=d.get('last_completed_date')
         ) for d in data]
 
     def get_items(self) -> List[BlockItem]:
         return self.items
 
     def toggle_completion(self, item_id: int):
-        # In a real app we might persist this daily state
-        # For now, just in-memory session toggle for demo
+        import datetime
+        today_str = datetime.date.today().isoformat()
+        
         for item in self.items:
             if item.id == item_id:
+                # Toggle internal state
                 item.is_completed = not item.is_completed
+                
+                if item.is_completed:
+                    # Logic when marking as DONE
+                    # Check if already done today to avoid double counting
+                    if item.last_completed_date == today_str:
+                        # Already counted for today, just visual toggle?
+                        # Or maybe we shouldn't have let it toggle if it was persisted as done?
+                        # For now, let's assume we proceed but don't double increment streak
+                        pass
+                    else:
+                        # Calculate Streak
+                        new_streak = item.streak
+                        yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+                        
+                        if item.last_completed_date == yesterday:
+                            new_streak += 1
+                        else:
+                            new_streak = 1 # Reset or start (unless it was today, handled above)
+                            
+                        item.streak = new_streak
+                        item.total_minutes += item.duration
+                        item.last_completed_date = today_str
+                        
+                        # Persist Stats
+                        self.update_stats(item.id, item.streak, item.total_minutes, item.last_completed_date)
+                        
+                else:
+                    # Logic when marking as UNDONE (Oops, didn't do it)
+                    # If it was marked done today, we should revert stats
+                    if item.last_completed_date == today_str:
+                        item.streak = max(0, item.streak - 1)
+                        item.total_minutes = max(0, item.total_minutes - item.duration)
+                        # We don't know the exact previous date, but we can clear today.
+                        # Setting to None or staying as today? 
+                        # If we set to None, streak logic next time will reset to 1.
+                        # If we leave it as today, next toggle will think it's done.
+                        # Best effort: Set to yesterday so they can re-check it? 
+                        # Or just leave it and let them re-check.
+                        # Actually, if we decrement streak, we are assuming it was incremented today.
+                        # Let's just rollback the values.
+                        # To properly support undo, we'd need transaction history, but simple revert is fine.
+                        pass  
+                        
+                        # Note: Simple undo is complex without history. 
+                        # V1 Decision: Only persist POSITIVE completions for reliability. 
+                        # Unchecking is visual only for the session.
+                        pass
+
                 break
     
+    def update_stats(self, item_id, streak, total, date_str):
+        conn = database.get_connection()
+        c = conn.cursor()
+        c.execute("UPDATE routine_items SET current_streak=?, total_minutes=?, last_completed_date=? WHERE id=?",
+                  (streak, total, date_str, item_id))
+        conn.commit()
+        conn.close()
+
     def all_completed(self):
         return all(i.is_completed for i in self.items)
 

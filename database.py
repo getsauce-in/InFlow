@@ -1,7 +1,11 @@
+
 import sqlite3
 import datetime
 from typing import List, Optional, Dict, Any
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = "flow.db"
 
@@ -205,6 +209,78 @@ def get_history_stats():
     conn.close()
     return logs
     
+# --- Sync Operations ---
+
+def get_all_routines() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM routines")
+    items = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return items
+
+def get_all_routine_items() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM routine_items")
+    items = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return items
+
+def get_all_daily_logs() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM daily_logs")
+    items = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return items
+
+def upsert_routines(routines: List[Dict[str, Any]]):
+    if not routines: return
+    conn = get_connection()
+    c = conn.cursor()
+    for r in routines:
+        c.execute('''INSERT INTO routines (id, name, description, is_default, created_at)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON CONFLICT(id) DO UPDATE SET
+                     name=excluded.name, description=excluded.description, 
+                     is_default=excluded.is_default, created_at=excluded.created_at''',
+                  (r.get('id'), r.get('name'), r.get('description'), r.get('is_default'), r.get('created_at')))
+    conn.commit()
+    conn.close()
+
+def upsert_routine_items(items: List[Dict[str, Any]]):
+    if not items: return
+    conn = get_connection()
+    c = conn.cursor()
+    for i in items:
+        # Note: We need to handle potential new columns from migrations gracefully
+        c.execute('''INSERT INTO routine_items (id, routine_id, title, duration_minutes, icon, sort_order, is_enabled, current_streak, total_minutes, last_completed_date)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT(id) DO UPDATE SET
+                     routine_id=excluded.routine_id, title=excluded.title, duration_minutes=excluded.duration_minutes,
+                     icon=excluded.icon, sort_order=excluded.sort_order, is_enabled=excluded.is_enabled,
+                     current_streak=excluded.current_streak, total_minutes=excluded.total_minutes, last_completed_date=excluded.last_completed_date''',
+                  (i.get('id'), i.get('routine_id'), i.get('title'), i.get('duration_minutes'), i.get('icon'), 
+                   i.get('sort_order'), i.get('is_enabled'), i.get('current_streak', 0), i.get('total_minutes', 0), i.get('last_completed_date')))
+    conn.commit()
+    conn.close()
+
+def upsert_daily_logs(logs: List[Dict[str, Any]]):
+    if not logs: return
+    conn = get_connection()
+    c = conn.cursor()
+    for l in logs:
+        c.execute('''INSERT INTO daily_logs (id, date, started_at, completed_at, total_time_seconds, completion_rate, notes)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT(date) DO UPDATE SET
+                     started_at=excluded.started_at, completed_at=excluded.completed_at, 
+                     total_time_seconds=excluded.total_time_seconds, completion_rate=excluded.completion_rate, notes=excluded.notes''',
+                  (l.get('id'), l.get('date'), l.get('started_at'), l.get('completed_at'), l.get('total_time_seconds'), l.get('completion_rate'), l.get('notes')))
+    conn.commit()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_db()
     print("Database initialized.")

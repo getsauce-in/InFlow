@@ -1,103 +1,105 @@
 <div align="center">
 
-# InFlow
-### Your Flow State, Engineered.
+<img src="assets/screenshots/home.png" alt="InFlow Logo" width="120" height="auto" />
 
-![Version](https://img.shields.io/badge/version-1.0.2-blue.svg?style=for-the-badge)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
+# MorningOS (InFlow)
+**Your Flow State, Engineered.**
+
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=for-the-badge)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+*An adaptive, session-based productivity environment designed to minimize cognitive friction and orchestrate deep work.*
+
+[Features](#-core-features) • [Installation](#-installation--setup) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 <br />
-
-<img src="assets/screenshots/home.png" alt="InFlow Home Screen" width="800" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-
+<img src="assets/screenshots/home.png" alt="InFlow Home Screen" width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
 <br />
-<br />
-
-**InFlow** is a desktop-first productivity environment designed to minimize friction and maximize deep work through a structured, session-based workflow.
-
-It takes the philosophy of structured time-blocking and amplifies it with a dedicated, immersive desktop experience, allowing you to orchestrate your day with precision and flow.
-
-[Features](#-features) • [Installation](#-installation) • [Contributing](#-contributing)
-
 </div>
 
 ---
 
-## Philosophy
+## 🌊 Philosophy
 
-In a world of constant distraction, **InFlow** provides a sanctuary for focus. Unlike traditional calendar apps that visualize time as a scarce resource to be managed, InFlow visualizes time as a **stream of focus**.
+In a world governed by infinite feeds and constant context-switching, MorningOS (InFlow) provides a sanctuary for focused execution. Unlike traditional calendar applications that manage time as a scarce resource, MorningOS visualizes time as a **stream of focus**.
 
-> "The secret of getting ahead is getting started." - *Mark Twain*
-
-InFlow helps you:
-1.  **Define Intent**: Break your day into distinct "Sessions" rather than rigid calendar slots.
-2.  **Enter the Zone**: A dedicated, full-screen focus mode eliminates desktop clutter.
-3.  **Maintain Rhythm**: Seamless transitions between resting and working states.
+By enforcing strict, modular "Sessions" within a dedicated, distraction-free desktop environment, MorningOS helps you define intent, enter the zone consistently, and maintain rhythm throughout your workday.
 
 ---
 
-## Features
+## ✨ Core Features
 
-### Session-Based Workflow
-Build your daily routine using modular "Blocks". Whether it's *Deep Work*, *Meditation*, or a *Quick Break*, your day is your own.
+### 🎯 Session-Based Execution
+Build your routine using modular time-blocks. Transition seamlessly between deep work, meditation, and breaks without breaking state.
+* **Fluid Reordering**: Drag and drop session blocks to adapt your schedule dynamically.
+* **Active Focus Mode**: A dedicated, full-screen timer view minimizes desktop clutter and anchors your attention.
+* **Granular Control**: Pause, resume, or restart specific blocks effortlessly.
 
-<div align="center">
-  <img src="assets/screenshots/sessions.png" alt="Session Management" width="700">
-</div>
+### 📊 Insightful Analytics
+Track your productivity patterns with an integrated, privacy-focused local database.
+* **Real-time Metrics**: Monitor total focus time, session completion rates, and daily streaks.
+* **7-Day Trend Visualization**: Custom-built, interactive charts render your weekly activity to highlight momentum and identify friction points.
 
-*   **Drag & Drop Ordering**: Fluidly rearrange your day as priorities shift.
-*   **Template Library**: Save your perfect morning routine and reuse it instantly. (Coming Soon)
+### 🎨 Adaptive, Glassmorphism UI
+Your environment dictates your mindset. MorningOS features a bespoke rendering engine utilizing high-performance Tkinter Canvas operations to achieve modern, web-like aesthetics natively.
+* **OLED-Ready Themes**: From *Carbon* to *Cyberpunk*, select deep-contrast themes tailored for visual comfort.
+* **Fluid Micro-interactions**: Hover states, tooltips, and dynamic layouts respond instantly to user input.
 
-### Adaptive Aesthetics
-Your environment shapes your mindset. InFlow features a state-of-the-art design engine with selectable themes to match your cognitive state.
-
-<div align="center">
-  <img src="assets/screenshots/settings.png" alt="Settings and Themes" width="700">
-</div>
-
-*   **OLED-Ready Dark Modes**: Deep blacks and vibrant neons reduce eye strain.
-*   **Glassmorphism UI**: Modern, translucent layers providing context without clutter.
-*   **Custom Color Accents**: From *Cyberpunk Cyan* to *Zen Green*.
-
-### Performance First
-Built with a lightweight Python core, InFlow respects your system resources. It runs silently in the background, consuming minimal RAM so your heavy tools have room to breathe.
+### ☁️ Seamless Cloud Synchronization
+Keep your routines backed up and synchronized across devices without the overhead of heavy backend frameworks.
+* **Supabase Integration**: Direct REST API integration securely pulls and pushes your SQLite data to the cloud.
 
 ---
 
-## Installation
+## 🚀 Installation & Setup
 
 ### Prerequisites
-*   Windows, macOS, or Linux
-*   Python 3.10+
+* Python 3.10 or higher
+* Git
 
-### Quick Start
+### Local Deployment
 ```bash
 # 1. Clone the repository
 git clone https://github.com/getsauce-in/InFlow.git
 cd InFlow
 
-# 2. Install dependencies
+# 2. Install minimal dependencies
 pip install -r requirements.txt
-
-# 3. Launch InFlow
-python main.py
 ```
+
+### Quick Launch
+MorningOS is designed to be lightweight. We have provided packaged launch scripts so you never need to touch the terminal after installation:
+
+* **Windows**: Double-click the provided `run.bat` script. *(Tip: Pin this script to your taskbar and set its icon to `assets/screenshots/home.png` for a native application feel!)*
+* **macOS / Linux**: Execute `./run.sh` from your terminal or bind it to an application launcher.
+* **Manual execution**: `python main.py`
 
 ---
 
-## Contributing
+## 🏗 Architecture
 
-We believe in open ecosystems. If you're a developer, designer, or productivity enthusiast, come build with us.
+MorningOS is engineered for absolute reliability and low resource consumption, bridging the gap between hardware-level execution and modern UI paradigms.
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+* **Frontend**: Pure Python `Tkinter`. We bypass standard, rigid OS widgets by rendering bespoke `Canvas` objects (e.g., `RoundedRect`, `GlassCard`, `NeonButton`) to achieve hardware-accelerated, customizable aesthetics without the footprint of Electron or Chromium.
+* **State Management**: Event-driven UI updates bound tightly to a localized `BlocksManager`.
+* **Persistence**: Python's native `sqlite3` ensures atomic, zero-configuration local storage.
+* **Networking**: Non-blocking `httpx` routines handle explicit cloud synchronization payloads to Supabase endpoints, guaranteeing offline-first capability.
+
+---
+
+## 🤝 Contributing
+
+We are committed to building an open, highly-performant ecosystem for productivity. Contributions from developers, designers, and productivity researchers are highly encouraged.
+
+1. **Fork** the repository
+2. **Create** your feature branch: `git checkout -b feature/AmazingImplementation`
+3. **Commit** your changes: `git commit -m 'feat: Add sophisticated algorithm'`
+4. **Push** to the branch: `git push origin feature/AmazingImplementation`
+5. **Open** a Pull Request
 
 ---
 
 <div align="center">
-    Built with 💻 and ☕ by the <a href="https://github.com/getsauce-in">InFlow Team</a>.
+    <i>Engineered with precision by the <a href="https://github.com/getsauce-in">InFlow Team</a>.</i>
 </div>

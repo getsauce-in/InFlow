@@ -43,6 +43,10 @@ class ActiveRoutineView(BaseView):
         self.controls_frame = tk.Frame(self.center_frame, bg=Colors.BACKGROUND)
         self.controls_frame.pack()
         
+        self.btn_restart = NeonButton(self.controls_frame, text="Restart", width=140, height=50, 
+                                      accent_color=Colors.ACCENT, command=self.restart_step)
+        self.btn_restart.pack(side="left", padx=10)
+        
         self.btn_pause = NeonButton(self.controls_frame, text="Pause", width=140, height=50, 
                                     accent_color=Colors.NEON_PURPLE, command=self.toggle_pause)
         self.btn_pause.pack(side="left", padx=10)
@@ -97,6 +101,9 @@ class ActiveRoutineView(BaseView):
         self.is_paused = not self.is_paused
         # Note: In a real NeonButton we'd expose a method to update text
         # For now visual feedback is minimal
+
+    def restart_step(self):
+        self.start_step(self.current_index)
 
     def next_step(self):
         self.start_step(self.current_index + 1)

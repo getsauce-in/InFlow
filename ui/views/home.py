@@ -29,15 +29,26 @@ class HomeView(BaseView):
         # 2. Massive Time (Cinematic)
         self.lbl_time = tk.Label(center_frame, text="", font=Fonts.CINEMA, 
                             bg=Colors.BACKGROUND, fg=Colors.TEXT_PRIMARY)
-        self.lbl_time.pack(pady=(0, 40))
+        self.lbl_time.pack(pady=(0, 5))
+        
+        # 3. Date
+        self.lbl_date = tk.Label(center_frame, text="", font=("Segoe UI", 16), 
+                            bg=Colors.BACKGROUND, fg=Colors.TEXT_SECONDARY)
+        self.lbl_date.pack(pady=(0, 40))
+        
         self.update_clock()
         
-        # 3. The One Button (Focus)
+        # 4. The One Button (Focus)
         btn_focus = NeonButton(center_frame, text="Start Session", width=220, height=60,
                                accent_color=Colors.ACCENT, command=self.app.enter_focus_mode)
         btn_focus.pack()
 
     def update_clock(self):
-        current_time = datetime.datetime.now().strftime("%I:%M %p")
+        now = datetime.datetime.now()
+        current_time = now.strftime("%I:%M %p")
+        current_date = now.strftime("%A, %d %B")
+        
         self.lbl_time.config(text=current_time)
+        self.lbl_date.config(text=current_date)
+        
         self.after(1000, self.update_clock)

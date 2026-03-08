@@ -10,6 +10,7 @@ from ui_components import IntegratedTitleBar, GlassCard, NeonButton
 from modules.blocks import BlocksManager
 from ui.views import HomeView, SettingsView
 from ui.views.blocks import BlocksView
+from ui.views.analytics import AnalyticsView
 from active_view import ActiveRoutineView
 import database
 
@@ -21,6 +22,13 @@ class Flow(tk.Tk):
         # Frameless Window
         self.overrideredirect(True) 
         self.title_bar_height = 30
+        
+        # Application Icon
+        try:
+             icon_img = tk.PhotoImage(file="assets/screenshots/home.png") # Temp fallback to any existing image
+             self.iconphoto(True, icon_img)
+        except Exception:
+             pass
         
         # Initial Geometry
         self.window_w = Metrics.WINDOW_WIDTH
@@ -44,8 +52,11 @@ class Flow(tk.Tk):
         
         self.setup_ui()
         self.show_view("Sessions") 
-        # Reverting default to Home or Routine? User asked for Routine page design heavily. 
-        # But V2 usually defaults to Home. I'll keep Routine to verify the revert.
+        
+        # Ensure window is visible
+        self.deiconify()
+        self.lift()
+        self.focus_force()
 
     def window_action(self, action):
         if action == "close":
@@ -95,11 +106,11 @@ class Flow(tk.Tk):
         self.view_container = tk.Frame(self.content_area, bg=Colors.BACKGROUND)
         self.view_container.pack(fill="both", expand=True)
 
-        # 1. Integrated Title Bar (Nav + Controls) - Overlay on top
+        # 1. Integrated TitleBar (Nav + Controls) - Overlay on top
         self.top_frame = tk.Frame(self, bg=Colors.NAV_BG)
         self.top_frame.place(relx=0, rely=0, relwidth=1.0, height=30)
         
-        self.navbar = IntegratedTitleBar(self.top_frame, items=["Home", "Sessions", "Settings"], 
+        self.navbar = IntegratedTitleBar(self.top_frame, items=["Home", "Sessions", "Analytics", "Settings"], 
                                   command_callback=self.show_view,
                                   window_control_callback=self.window_action, 
                                   height=30)
@@ -179,6 +190,8 @@ class Flow(tk.Tk):
             HomeView(self.view_container, self)
         elif view_name == "Sessions":
             BlocksView(self.view_container, self)
+        elif view_name == "Analytics":
+            AnalyticsView(self.view_container, self)
         elif view_name == "Settings":
             SettingsView(self.view_container, self)
 
@@ -213,7 +226,7 @@ class Flow(tk.Tk):
         # The easiest way is to re-create it or just update its background
         # Since NavBar has internal colors, recreation is cleaner
         self.navbar.destroy()
-        self.navbar = IntegratedTitleBar(self.top_frame, items=["Home", "Sessions", "Settings"], 
+        self.navbar = IntegratedTitleBar(self.top_frame, items=["Home", "Sessions", "Analytics", "Settings"], 
                                   command_callback=self.show_view,
                                   window_control_callback=self.window_action, 
                                   height=30)

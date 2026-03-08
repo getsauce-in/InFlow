@@ -1,0 +1,14 @@
+# MorningOS (InFlow) Requirements
+# Generated for Production Distribution
+
+# Core UI
+# (Tkinter is built into Python standard library, but we list other deps here)
+
+# Database
+# (SQLite3 is built into Python standard library)
+
+# Cloud Sync
+httpx==0.28.1
+
+# Optional but recommended for packaging
+# pyinstaller==6.5.0
