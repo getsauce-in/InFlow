@@ -10,7 +10,8 @@ class BaseView(tk.Frame):
         self.pack(fill="both", expand=True)
 
 class ActiveRoutineView(BaseView):
-    def __init__(self, master, app_context, routine_items):
+    def __init__(self, master, app_context, routine_items, 
+                 resume_index=None, resume_time=None, resume_paused=False):
         super().__init__(master, app_context)
         self.items = routine_items
         self.current_index = 0
@@ -18,7 +19,24 @@ class ActiveRoutineView(BaseView):
         self.time_left = 0
         
         self.setup_ui()
-        self.start_step(0)
+        
+        # Resume from saved state if provided
+        if resume_index is not None and resume_index < len(self.items):
+            self.current_index = resume_index
+            item = self.items[resume_index]
+            self.lbl_progress.config(text=f"STEP {resume_index + 1} OF {len(self.items)}")
+            self.lbl_icon.config(text=item.icon)
+            self.lbl_step.config(text=item.title)
+            instructions = getattr(item, 'description', '')
+            if not instructions.strip():
+                instructions = "Focus on the current task. Remove all distractions."
+            self.lbl_desc.config(text=instructions)
+            self.time_left = resume_time if resume_time is not None else item.duration * 60
+            self.is_paused = resume_paused
+            self.update_timer_display()
+            self.schedule_tick()
+        else:
+            self.start_step(0)
 
     def setup_ui(self):
         # Center Container
@@ -127,6 +145,8 @@ class ActiveRoutineView(BaseView):
     def finish_routine(self):
         if hasattr(self, 'timer_id'):
             self.after_cancel(self.timer_id)
+        # Clear any saved session — routine is complete
+        self.app.active_session = None
         # Show Completion Screen
         for widget in self.winfo_children():
             widget.destroy()

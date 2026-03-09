@@ -29,10 +29,12 @@ class Flow(tk.Tk):
              if os.path.exists(icon_path):
                  self.iconbitmap(default=icon_path)
              # Also set the photo icon for alt-tab / taskbar previews
-             png_path = os.path.join("assets", "icon.png")
+             png_path = os.path.join("assets", "logo.png")
+             if not os.path.exists(png_path):
+                 png_path = os.path.join("assets", "icon.png")
              if os.path.exists(png_path):
-                 icon_img = tk.PhotoImage(file=png_path)
-                 self.iconphoto(True, icon_img)
+                 self._icon_img = tk.PhotoImage(file=png_path)
+                 self.iconphoto(True, self._icon_img)
         except Exception:
              pass
         
@@ -55,6 +57,7 @@ class Flow(tk.Tk):
              pass
 
         self.blocks_manager = BlocksManager()
+        self.active_session = None  # Stores session state when switching tabs
         
         self.setup_ui()
         self.show_view("Sessions") 
@@ -183,6 +186,9 @@ class Flow(tk.Tk):
             self.hide_timer = None
 
     def show_view(self, view_name):
+        # Save active session state before destroying the view
+        self._save_active_session()
+        
         # NORMAL MODE
         self.in_focus_mode = False
         self.show_navbar()
@@ -201,6 +207,21 @@ class Flow(tk.Tk):
         elif view_name == "Settings":
             SettingsView(self.view_container, self)
 
+    def _save_active_session(self):
+        """Save the current Focus Mode session state before tab switch."""
+        for widget in self.view_container.winfo_children():
+            if isinstance(widget, ActiveRoutineView):
+                # Cancel the timer to prevent orphan after callbacks
+                if hasattr(widget, 'timer_id'):
+                    widget.after_cancel(widget.timer_id)
+                self.active_session = {
+                    'index': widget.current_index,
+                    'time_left': widget.time_left,
+                    'is_paused': widget.is_paused,
+                    'items': widget.items,
+                }
+                return
+
     def start_routine_flow(self):
         # FOCUS MODE
         self.in_focus_mode = True
@@ -209,8 +230,19 @@ class Flow(tk.Tk):
         
         for widget in self.view_container.winfo_children():
             widget.destroy()
+        
         items = self.blocks_manager.get_items()
-        ActiveRoutineView(self.view_container, self, items)
+        
+        # Restore saved session if available
+        if self.active_session:
+            saved = self.active_session
+            self.active_session = None  # Clear so next start is fresh if they finish
+            view = ActiveRoutineView(self.view_container, self, saved['items'], 
+                                     resume_index=saved['index'],
+                                     resume_time=saved['time_left'],
+                                     resume_paused=saved['is_paused'])
+        else:
+            ActiveRoutineView(self.view_container, self, items)
 
     def enter_focus_mode(self):
         self.start_routine_flow()
