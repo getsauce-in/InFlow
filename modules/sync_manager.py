@@ -1,66 +1,89 @@
 import logging
+import threading
 import httpx
 from modules.supabase_credentials import get_supabase_headers, SUPABASE_URL
 import database
 
 logger = logging.getLogger(__name__)
 
-def sync_to_cloud():
-    """Pushes local SQLite data to Supabase using REST APIs."""
+# Known Supabase table schemas — only send columns that exist remotely
+# If a column doesn't exist in Supabase, it gets stripped automatically
+SUPABASE_COLUMNS = {
+    "routines": ["id", "name", "description", "is_default", "created_at"],
+    "routine_items": ["id", "routine_id", "title", "duration_minutes", "icon", "sort_order", "is_enabled"],
+    "daily_logs": ["id", "date", "started_at", "completed_at", "total_time_seconds", "completion_rate", "notes"],
+}
+
+def _filter_rows(table: str, rows: list) -> list:
+    """Filter row dicts to only include columns that exist in Supabase."""
+    allowed = SUPABASE_COLUMNS.get(table)
+    if not allowed:
+        return rows
+    return [{k: v for k, v in row.items() if k in allowed} for row in rows]
+
+def _upsert_rows(table: str, rows: list, on_conflict: str = "id"):
+    """Upsert rows into Supabase table using PostgREST."""
+    if not rows:
+        return
     headers = get_supabase_headers()
     
-    # 1. Sync Routines
-    routines = database.get_all_routines()
-    if routines:
-        resp = httpx.post(f"{SUPABASE_URL}/rest/v1/routines", headers=headers, json=routines)
-        resp.raise_for_status()
-        logger.info(f"Synced {len(routines)} routines to cloud.")
+    # Filter to only Supabase-known columns
+    rows = _filter_rows(table, rows)
+    
+    url = f"{SUPABASE_URL}/rest/v1/{table}?on_conflict={on_conflict}"
+    
+    # Send in batches of 50
+    batch_size = 50
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i+batch_size]
+        try:
+            resp = httpx.post(url, headers=headers, json=batch, timeout=15.0)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Supabase upsert error for {table}: {e.response.status_code} - {e.response.text}")
+            raise
+        except Exception as e:
+            logger.error(f"Supabase connection error for {table}: {e}")
+            raise
+    
+    logger.info(f"Synced {len(rows)} rows to {table}")
 
-    # 2. Sync Routine Items
-    items = database.get_all_routine_items()
-    if items:
-        resp = httpx.post(f"{SUPABASE_URL}/rest/v1/routine_items", headers=headers, json=items)
-        resp.raise_for_status()
-        logger.info(f"Synced {len(items)} routine items to cloud.")
-        
-    # 3. Sync Daily Logs
-    logs = database.get_all_daily_logs()
-    if logs:
-        resp = httpx.post(f"{SUPABASE_URL}/rest/v1/daily_logs", headers=headers, json=logs)
-        resp.raise_for_status()
-        logger.info(f"Synced {len(logs)} daily logs to cloud.")
-
+def sync_to_cloud():
+    """Pushes local SQLite data to Supabase using REST APIs."""
+    _upsert_rows("routines", database.get_all_routines(), on_conflict="id")
+    _upsert_rows("routine_items", database.get_all_routine_items(), on_conflict="id")
+    _upsert_rows("daily_logs", database.get_all_daily_logs(), on_conflict="date")
     return True
 
 def sync_from_cloud():
     """Pulls data from Supabase and updates local SQLite."""
-    # We remove the 'Prefer' header to just do a standard GET
-    headers = get_supabase_headers()
-    if "Prefer" in headers:
-        del headers["Prefer"]
+    get_headers = {k: v for k, v in get_supabase_headers().items() if k != "Prefer"}
     
-    # 1. Pull Routines
-    routines_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/routines?select=*", headers=headers)
+    routines_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/routines?select=*", headers=get_headers, timeout=15.0)
     routines_resp.raise_for_status()
-    routines_data = routines_resp.json()
-    if routines_data:
-        database.upsert_routines(routines_data)
-        logger.info(f"Pulled {len(routines_data)} routines from cloud.")
+    if routines_resp.json():
+        database.upsert_routines(routines_resp.json())
+        logger.info(f"Pulled {len(routines_resp.json())} routines from cloud.")
 
-    # 2. Pull Routine Items
-    items_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/routine_items?select=*", headers=headers)
+    items_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/routine_items?select=*", headers=get_headers, timeout=15.0)
     items_resp.raise_for_status()
-    items_data = items_resp.json()
-    if items_data:
-        database.upsert_routine_items(items_data)
-        logger.info(f"Pulled {len(items_data)} routine items from cloud.")
+    if items_resp.json():
+        database.upsert_routine_items(items_resp.json())
+        logger.info(f"Pulled {len(items_resp.json())} routine items from cloud.")
 
-    # 3. Pull Daily Logs
-    logs_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/daily_logs?select=*", headers=headers)
+    logs_resp = httpx.get(f"{SUPABASE_URL}/rest/v1/daily_logs?select=*", headers=get_headers, timeout=15.0)
     logs_resp.raise_for_status()
-    logs_data = logs_resp.json()
-    if logs_data:
-        database.upsert_daily_logs(logs_data)
-        logger.info(f"Pulled {len(logs_data)} daily logs from cloud.")
+    if logs_resp.json():
+        database.upsert_daily_logs(logs_resp.json())
+        logger.info(f"Pulled {len(logs_resp.json())} daily logs from cloud.")
         
     return True
+
+def auto_sync_push():
+    """Fire-and-forget background sync after local edits."""
+    def _run():
+        try:
+            sync_to_cloud()
+        except Exception as e:
+            logger.warning(f"Auto-sync failed (non-blocking): {e}")
+    threading.Thread(target=_run, daemon=True).start()

@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()  # Load .env before anything else
+
 from app import Flow
 import time
 

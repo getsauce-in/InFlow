@@ -25,8 +25,14 @@ class Flow(tk.Tk):
         
         # Application Icon
         try:
-             icon_img = tk.PhotoImage(file="assets/screenshots/home.png") # Temp fallback to any existing image
-             self.iconphoto(True, icon_img)
+             icon_path = os.path.join("assets", "icon.ico")
+             if os.path.exists(icon_path):
+                 self.iconbitmap(default=icon_path)
+             # Also set the photo icon for alt-tab / taskbar previews
+             png_path = os.path.join("assets", "icon.png")
+             if os.path.exists(png_path):
+                 icon_img = tk.PhotoImage(file=png_path)
+                 self.iconphoto(True, icon_img)
         except Exception:
              pass
         

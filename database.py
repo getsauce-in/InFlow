@@ -84,6 +84,10 @@ def ensure_schema_updates():
         print("Migrating: Adding last_completed_date to routine_items")
         c.execute("ALTER TABLE routine_items ADD COLUMN last_completed_date TEXT") # Store as ISO string YYYY-MM-DD
         
+    if 'description' not in columns:
+        print("Migrating: Adding description to routine_items")
+        c.execute("ALTER TABLE routine_items ADD COLUMN description TEXT DEFAULT ''")
+        
     conn.commit()
     conn.close()
 
@@ -149,6 +153,18 @@ def add_routine_item(routine_id: int, title: str, duration: int, icon: str):
     conn.commit()
     conn.close()
 
+def add_curriculum_routine_items(routine_id: int, items_data: list):
+    """Bulk adds items specifically mapped from the curriculum JSON."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM routine_items WHERE routine_id = ?", (routine_id,))
+    
+    for idx, item in enumerate(items_data):
+        c.execute("INSERT INTO routine_items (routine_id, title, duration_minutes, icon, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
+                  (routine_id, item['title'], item['duration_minutes'], "📚", item['description'], idx))
+    conn.commit()
+    conn.close()
+
 def get_active_routine_name() -> str:
     conn = get_connection()
     c = conn.cursor()
@@ -165,11 +181,11 @@ def update_active_routine_name(new_name: str):
     conn.commit()
     conn.close()
 
-def update_routine_item(item_id: int, title: str, duration: int, icon: str):
+def update_routine_item(item_id: int, title: str, duration: int, icon: str, description: str = ""):
     conn = get_connection()
     c = conn.cursor()
-    c.execute("UPDATE routine_items SET title=?, duration_minutes=?, icon=? WHERE id=?", 
-              (title, duration, icon, item_id))
+    c.execute("UPDATE routine_items SET title=?, duration_minutes=?, icon=?, description=? WHERE id=?", 
+              (title, duration, icon, description, item_id))
     conn.commit()
     conn.close()
 
@@ -208,6 +224,40 @@ def get_history_stats():
     logs = [dict(row) for row in c.fetchall()]
     conn.close()
     return logs
+
+def add_xp(amount: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key='lifetime_xp'")
+    row = c.fetchone()
+    current_xp = int(row['value']) if row else 0
+    new_xp = current_xp + amount
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('lifetime_xp', ?)", (str(new_xp),))
+    conn.commit()
+    conn.close()
+
+def get_lifetime_xp() -> int:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key='lifetime_xp'")
+    row = c.fetchone()
+    conn.close()
+    return int(row['value']) if row else 0
+    
+def get_curriculum_start_date() -> str:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key='curriculum_start'")
+    row = c.fetchone()
+    if not row:
+        import datetime
+        today = datetime.date.today().isoformat()
+        c.execute("INSERT INTO settings (key, value) VALUES ('curriculum_start', ?)", (today,))
+        conn.commit()
+        conn.close()
+        return today
+    conn.close()
+    return row['value']
     
 # --- Sync Operations ---
 

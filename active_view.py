@@ -26,9 +26,13 @@ class ActiveRoutineView(BaseView):
         self.center_frame.place(relx=0.5, rely=0.5, anchor="center")
         
         # 1. Step Title & Icon
-        self.lbl_icon = tk.Label(self.center_frame, text="", font=("Segoe UI Emoji", 48), 
+        self.lbl_progress = tk.Label(self.center_frame, text="", font=("Segoe UI", 12, "bold"), 
+                                     bg=Colors.BACKGROUND, fg=Colors.NEON_PURPLE)
+        self.lbl_progress.pack(pady=(0, 10))
+
+        self.lbl_icon = tk.Label(self.center_frame, text="", font=("Segoe UI Emoji", 56), 
                                  bg=Colors.BACKGROUND, fg=Colors.NEON_YELLOW)
-        self.lbl_icon.pack(pady=(0, 20))
+        self.lbl_icon.pack(pady=(0, 15))
         
         self.lbl_step = tk.Label(self.center_frame, text="", font=Fonts.H1, 
                                  bg=Colors.BACKGROUND, fg=Colors.TEXT_PRIMARY)
@@ -37,7 +41,13 @@ class ActiveRoutineView(BaseView):
         # 2. Timer
         self.lbl_timer = tk.Label(self.center_frame, text="00:00", font=Fonts.CINEMA, 
                                   bg=Colors.BACKGROUND, fg=Colors.TEXT_PRIMARY)
-        self.lbl_timer.pack(pady=(0, 40))
+        self.lbl_timer.pack(pady=(0, 20))
+        
+        # 2.5 Focus Instructions
+        self.lbl_desc = tk.Label(self.center_frame, text="", font=Fonts.H3, 
+                                 bg=Colors.BACKGROUND, fg=Colors.TEXT_SECONDARY,
+                                 wraplength=700, justify="center")
+        self.lbl_desc.pack(pady=(0, 40))
         
         # 3. Controls
         self.controls_frame = tk.Frame(self.center_frame, bg=Colors.BACKGROUND)
@@ -64,8 +74,14 @@ class ActiveRoutineView(BaseView):
         item = self.items[index]
         
         # Update UI
+        self.lbl_progress.config(text=f"STEP {index + 1} OF {len(self.items)}")
         self.lbl_icon.config(text=item.icon)
         self.lbl_step.config(text=item.title)
+        
+        instructions = getattr(item, 'description', '')
+        if not instructions.strip():
+            instructions = "Focus on the current task. Remove all distractions."
+        self.lbl_desc.config(text=instructions)
         
         # Set Timer
         self.time_left = item.duration * 60

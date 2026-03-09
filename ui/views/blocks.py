@@ -3,7 +3,6 @@ from tkinter import simpledialog
 import threading
 from theme import Colors
 from ui.views.base import BaseView
-from ui.components.edit_modal import EditModal
 from ui.components.blocks_list import BlocksList
 from modules import templates
 
@@ -40,19 +39,44 @@ class BlocksView(BaseView):
         self.lbl_title.bind("<Button-1>", self.edit_routine_name)
         self.lbl_title.bind("<Enter>", lambda e: self.lbl_title.config(cursor="hand2"))
         
+        # HEADERS FRAME
+        header_actions = tk.Frame(self.wrapper, bg=Colors.BACKGROUND)
+        header_actions.pack(anchor="nw", pady=(0, 40))
+        
         # TEMPLATE BTN
-        self.btn_tmpl = tk.Label(self.wrapper, text="Load Template ▾", font=("Segoe UI", 10), 
+        self.btn_tmpl = tk.Label(header_actions, text="Load Template ▾", font=("Segoe UI", 10), 
                                  bg=Colors.SURFACE_1, fg=Colors.TEXT_SECONDARY, padx=15, pady=5)
-        self.btn_tmpl.pack(anchor="nw", pady=(0, 40))
+        self.btn_tmpl.pack(side="left", padx=(0, 10))
         self.btn_tmpl.bind("<Button-1>", self.show_templates)
         self.btn_tmpl.bind("<Enter>", lambda e: self.btn_tmpl.config(cursor="hand2", bg=Colors.SURFACE_2))
         self.btn_tmpl.bind("<Leave>", lambda e: self.btn_tmpl.config(bg=Colors.SURFACE_1))
 
+        # DAY BTN
+        self.btn_day = tk.Label(header_actions, text="Load 30-Day Path ▾", font=("Segoe UI", 10, "bold"), 
+                                bg=Colors.SURFACE_1, fg=Colors.NEON_YELLOW, padx=15, pady=5)
+        self.btn_day.pack(side="left")
+        self.btn_day.bind("<Button-1>", self.show_curriculum)
+        self.btn_day.bind("<Enter>", lambda e: self.btn_day.config(cursor="hand2", bg=Colors.SURFACE_2))
+        self.btn_day.bind("<Leave>", lambda e: self.btn_day.config(bg=Colors.SURFACE_1))
+
+
+        # STATS BAR
+        self.stats_frame = tk.Frame(self.wrapper, bg=Colors.BACKGROUND)
+        self.stats_frame.pack(anchor="nw", fill="x", pady=(0, 32))
+        
+        self.lbl_stat_blocks = self.create_stat(self.stats_frame, "0", "Blocks", first=True)
+        self.create_divider(self.stats_frame)
+        self.lbl_stat_time = self.create_stat(self.stats_frame, "0h", "Total Time")
+        self.create_divider(self.stats_frame)
+        self.lbl_stat_python = self.create_stat(self.stats_frame, "0h", "Python")
+        self.create_divider(self.stats_frame)
+        self.lbl_stat_realhow = self.create_stat(self.stats_frame, "0h", "RealHow")
+        self.create_divider(self.stats_frame)
+        self.lbl_stat_flagged = self.create_stat(self.stats_frame, "0", "Flagged")
 
         # BLOCKS LIST
-        self.list_view = BlocksList(self.wrapper, self.app, width=600)
+        self.list_view = BlocksList(self.wrapper, self.app, width=800)
         self.list_view.pack()
-        self.list_view.set_callbacks(self.show_edit_modal)
         
         # ADD BUTTON
         tk.Label(self.wrapper, text="+ Add Session Block", font=("Segoe UI", 11), 
@@ -75,63 +99,50 @@ class BlocksView(BaseView):
         self.content.update_idletasks()
         self.container.config(scrollregion=self.container.bbox("all"))
 
+    def create_stat(self, parent, val, label, first=False):
+        f = tk.Frame(parent, bg=Colors.BACKGROUND)
+        f.pack(side="left", padx=(0, 24) if first else 24)
+        num_lbl = tk.Label(f, text=val, font=("Consolas", 20, "bold"), fg=Colors.NEON_YELLOW, bg=Colors.BACKGROUND)
+        num_lbl.pack()
+        tk.Label(f, text=label.upper(), font=("Segoe UI", 9, "bold"), fg=Colors.TEXT_TERTIARY, bg=Colors.BACKGROUND).pack(pady=(2,0))
+        return num_lbl
+        
+    def create_divider(self, parent):
+        tk.Frame(parent, width=1, bg=Colors.SURFACE_3).pack(side="left", fill="y", pady=5)
+
     def update_header(self):
         self.lbl_title.config(text=self.blocks_manager.routine_name)
+        self.update_stats()
+        
+    def update_stats(self):
+        items = self.blocks_manager.items
+        total_m = sum(i.duration for i in items)
+        self.lbl_stat_blocks.config(text=str(len(items)))
+        
+        def fmt(m):
+            h = m / 60
+            if h.is_integer(): return f"{int(h)}h"
+            return f"{h:.2g}h"
+            
+        self.lbl_stat_time.config(text=fmt(total_m))
+        
+        py_m = 0
+        rh_m = 0
+        flagged = 0
+        for i in items:
+            title = i.title.lower()
+            if "python" in title: py_m += i.duration
+            if "realhow" in title or "dist" in title or "x" in title or "reddit" in title: rh_m += i.duration
+            if "review" in title or "write" in title: flagged += 1
+            
+        self.lbl_stat_python.config(text=fmt(py_m))
+        self.lbl_stat_realhow.config(text=fmt(rh_m))
+        self.lbl_stat_flagged.config(text=str(flagged))
 
     def add_block(self, e):
         self.blocks_manager.add_item("New Block", 15, "🟦")
         self.list_view.refresh()
         self.on_resize(None) # Recalc scroll
-
-    def show_edit_modal(self, item):
-        
-        def save_cb(id, title, duration, icon):
-            try: d = int(duration)
-            except: d = item.duration
-            if d < 1: d = 1
-            
-            # --- ROBUST OPTIMISTIC UPDATE ---
-            # Update the Single Source of Truth immediately
-            self.blocks_manager.update_item_optimistic(id, title.strip(), d, icon)
-            
-            # Refresh UI from that Source
-            self.list_view.refresh()
-            self.list_view.update_idletasks() # Force Immediate Redraw
-            
-            # --- THREADED PERSISTENCE ---
-            def _threaded_persist():
-                self.blocks_manager.update_item(id, title.strip(), d, icon)
-                # No need to sync UI again usually, but good for consistency check
-                self.after(0, lambda: self.list_view.refresh())
-
-            threading.Thread(target=_threaded_persist, daemon=True).start()
-            
-        def del_cb(id):
-            # Optimistic Remove
-            self.blocks_manager.items = [i for i in self.blocks_manager.items if i.id != id]
-            self.list_view.refresh()
-            self.on_resize(None)
-
-            # Threaded Persistence
-            def _threaded_persist():
-                self.blocks_manager.delete_item(id)
-                self.after(0, lambda: self.list_view.refresh())
-            
-            threading.Thread(target=_threaded_persist, daemon=True).start()
-            
-        def cancel_cb():
-            pass
-
-        modal = EditModal(self.app, item, save_cb, del_cb, cancel_cb)
-        
-        # Inject icon cycler logic if needed, or move to EditModal entirely
-        def cycle_icon(e):
-            curr = modal.lbl_icon.cget("text")
-            nxt = self.blocks_manager.get_next_icon(curr)
-            modal.lbl_icon.config(text=nxt)
-        modal.lbl_icon.bind("<Button-1>", cycle_icon)
-
-        modal.lift()
 
     def edit_routine_name(self, e):
         new_name = simpledialog.askstring("Routine Name", "Enter routine name:", initialvalue=self.blocks_manager.routine_name)
@@ -149,4 +160,28 @@ class BlocksView(BaseView):
         self.blocks_manager.load_template(t)
         self.update_header()
         self.list_view.refresh()
+        self.update_stats()
+        self.on_resize(None)
+        
+    def show_curriculum(self, e):
+        import json
+        import os
+        filepath = os.path.join("assets", "curriculum.json")
+        if not os.path.exists(filepath): return
+        
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        menu = tk.Menu(self, tearoff=0)
+        # Menus scroll automatically in Tkinter 8.6
+        for day in list(data.keys()):
+            menu.add_command(label=day, command=lambda d=day: self.load_curriculum(d))
+            
+        menu.tk_popup(e.x_root, e.y_root)
+        
+    def load_curriculum(self, day):
+        self.blocks_manager.load_curriculum_day(day)
+        self.update_header()
+        self.list_view.refresh()
+        self.update_stats()
         self.on_resize(None)

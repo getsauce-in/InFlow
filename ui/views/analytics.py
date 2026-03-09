@@ -222,8 +222,8 @@ class AnalyticsView(BaseView):
         self.card_focus = AppleStatCard(stats_frame, width=180, height=130, title="Total Focus Time", icon="⏳", accent=Colors.ACCENT)
         self.card_focus.grid(row=0, column=1, padx=(0, 30))
         
-        self.card_rate = AppleStatCard(stats_frame, width=180, height=130, title="Avg Completion", icon="🎯", accent=Colors.ACCENT)
-        self.card_rate.grid(row=0, column=2, padx=(0, 0)) # No right padding on last item
+        self.card_xp = AppleStatCard(stats_frame, width=180, height=130, title="Total XP", icon="🌟", accent=Colors.NEON_YELLOW)
+        self.card_xp.grid(row=0, column=2, padx=(0, 0)) # No right padding on last item
         
         # 3. Chart Section
         chart_header = tk.Frame(self.wrapper, bg=Colors.BACKGROUND)
@@ -287,13 +287,8 @@ class AnalyticsView(BaseView):
             if hasattr(i, 'streak') and i.streak > max_streak: max_streak = i.streak
             if hasattr(i, 'total_minutes'): total_time_all += i.total_minutes
             
-        # Overall completion rate over logs
-        avg_rate = 0
-        if logs:
-            rate_sum = sum(l.get('completion_rate', 0) for l in logs)
-            avg_rate = (rate_sum / len(logs)) * 100
-        else:
-            avg_rate = 100 # Default if no logs, but routines completed? Just aesthetic fallback
+        # Overall completion rate logic removed to make room for XP display
+        lifetime_xp = database.get_lifetime_xp()
             
         # 2. Update Cards
         self.card_streak.value = f"{max_streak} D"
@@ -304,8 +299,8 @@ class AnalyticsView(BaseView):
         self.card_focus.value = f"{hours}h {mins}m"
         self.card_focus.draw()
         
-        self.card_rate.value = f"{int(avg_rate)}%"
-        self.card_rate.draw()
+        self.card_xp.value = f"{lifetime_xp:,}"
+        self.card_xp.draw()
 
         # 3. Update Chart
         self.chart.data = chart_data

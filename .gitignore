@@ -99,3 +99,14 @@ cython_debug/
 # OS Specific
 .DS_Store
 Thumbs.db
+
+# InFlow Personal Data
+flow.db
+*.db
+
+# IDE
+.vscode/
+
+# Local assets (generated icons)
+assets/icon.ico
+assets/curriculum.json
