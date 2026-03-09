@@ -20,7 +20,7 @@
 
 ---
 
-## 🌊 Philosophy
+## Philosophy
 
 In a world governed by infinite feeds and constant context-switching, MorningOS (InFlow) provides a sanctuary for focused execution. Unlike traditional calendar applications that manage time as a scarce resource, MorningOS visualizes time as a **stream of focus**.
 
@@ -28,20 +28,20 @@ By enforcing strict, modular "Sessions" within a dedicated, distraction-free des
 
 ---
 
-## ✨ Core Features
+## Core Features
 
-### 🎯 Session-Based Execution
+### Session-Based Execution
 Build your routine using modular time-blocks. Transition seamlessly between deep work, meditation, and breaks without breaking state.
 * **Fluid Reordering**: Drag and drop session blocks to adapt your schedule dynamically.
 * **Active Focus Mode**: A dedicated, full-screen timer view minimizes desktop clutter and anchors your attention.
 * **Granular Control**: Pause, resume, or restart specific blocks effortlessly.
 
-### 📊 Insightful Analytics
+### Insightful Analytics
 Track your productivity patterns with an integrated, privacy-focused local database.
 * **Real-time Metrics**: Monitor total focus time, session completion rates, and daily streaks.
 * **7-Day Trend Visualization**: Custom-built, interactive charts render your weekly activity to highlight momentum and identify friction points.
 
-### 🎨 Adaptive, Glassmorphism UI
+### Adaptive, Glassmorphism UI
 Your environment dictates your mindset. MorningOS features a bespoke rendering engine utilizing high-performance Tkinter Canvas operations to achieve modern, web-like aesthetics natively.
 * **OLED-Ready Themes**: From *Carbon* to *Cyberpunk*, select deep-contrast themes tailored for visual comfort.
 * **Fluid Micro-interactions**: Hover states, tooltips, and dynamic layouts respond instantly to user input.
@@ -52,7 +52,7 @@ Keep your routines backed up and synchronized across devices without the overhea
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 * Python 3.10 or higher
@@ -77,7 +77,7 @@ MorningOS is designed to be lightweight. We have provided packaged launch script
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 MorningOS is engineered for absolute reliability and low resource consumption, bridging the gap between hardware-level execution and modern UI paradigms.
 
@@ -88,7 +88,7 @@ MorningOS is engineered for absolute reliability and low resource consumption, b
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We are committed to building an open, highly-performant ecosystem for productivity. Contributions from developers, designers, and productivity researchers are highly encouraged.
 
