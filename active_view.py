@@ -1,7 +1,48 @@
 import tkinter as tk
 import time
+import os
+import threading
 from theme import Colors, Fonts, Metrics, Easing
 from ui_components import NeonButton
+from modules.session_logger import log_block_completion
+
+BELL_SOUND = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+                          if "__file__" in dir() else ".", 
+                          "assets", "soundreality-bell-fx-410608.mp3")
+
+# Resolve relative to CWD as fallback
+if not os.path.isabs(BELL_SOUND) or not os.path.exists(BELL_SOUND):
+    BELL_SOUND = os.path.join("assets", "soundreality-bell-fx-410608.mp3")
+
+def _play_bell():
+    """Play the bell sound using Windows Media Player COM (zero dependencies)."""
+    def _run():
+        try:
+            abs_path = os.path.abspath(BELL_SOUND)
+            if not os.path.exists(abs_path):
+                return
+            import subprocess
+            # Use PowerShell to play the mp3 via .NET SoundPlayer or Media.MediaPlayer
+            ps_cmd = (
+                f'Add-Type -AssemblyName PresentationCore; '
+                f'$p = New-Object System.Windows.Media.MediaPlayer; '
+                f'$p.Open([uri]"{abs_path}"); '
+                f'$p.Play(); '
+                f'Start-Sleep -Seconds 4; '
+                f'$p.Close()'
+            )
+            subprocess.Popen(
+                ["powershell", "-WindowStyle", "Hidden", "-Command", ps_cmd],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=0x08000000  # CREATE_NO_WINDOW
+            )
+        except Exception:
+            try:
+                import winsound
+                winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS | winsound.SND_ASYNC)
+            except:
+                pass
+    threading.Thread(target=_run, daemon=True).start()
 
 class BaseView(tk.Frame):
     def __init__(self, master, app_context):
@@ -107,8 +148,11 @@ class ActiveRoutineView(BaseView):
         
         # Start Countdown
         self.is_paused = False
-        self.btn_pause.text = "Pause" # Hacky property update if NeonButton supports it, else we redraw
+        self.btn_pause.text = "Pause"
         self.schedule_tick()
+        
+        # Play bell sound at block start
+        _play_bell()
 
     def schedule_tick(self):
         if hasattr(self, 'timer_id'):
@@ -140,6 +184,11 @@ class ActiveRoutineView(BaseView):
         self.start_step(self.current_index)
 
     def next_step(self):
+        # Log the completed block
+        item = self.items[self.current_index]
+        elapsed = (item.duration * 60) - self.time_left
+        completed_mins = max(1, elapsed // 60)  # At least 1 min credit
+        log_block_completion(item.title, completed_mins, item.icon)
         self.start_step(self.current_index + 1)
 
     def finish_routine(self):

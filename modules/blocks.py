@@ -254,10 +254,23 @@ class BlocksManager:
         
         day_num = days_diff + 1
         day_key = f"Day {day_num}"
+        expected_name = f"Curriculum: {day_key}"
         
-        # Auto-load if the current routine name does not match the computed day and the day exists
-        if self.routine_name != f"Curriculum: {day_key}":
-            # Just do a lazy check to see if we have this day in JSON before trying
+        # ONLY auto-sync if:
+        # 1. The routine is empty (first launch / fresh DB), OR
+        # 2. The current routine is from a PREVIOUS day (not today's)
+        #    AND the routine name starts with "Curriculum:" (user hasn't customized it)
+        should_sync = False
+        
+        if not self.items:
+            # No blocks at all — first launch or empty DB
+            should_sync = True
+        elif self.routine_name.startswith("Curriculum:") and self.routine_name != expected_name:
+            # It's a new day and we're still on yesterday's curriculum
+            # Check if the user is in mid-session — don't wipe if they are
+            should_sync = True
+        
+        if should_sync:
             import os, json
             if os.path.exists(os.path.join("assets", "curriculum.json")):
                 with open(os.path.join("assets", "curriculum.json"), "r", encoding="utf-8") as f:

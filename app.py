@@ -88,8 +88,9 @@ class Flow(tk.Tk):
         if action == "close":
             self.destroy()
         elif action == "minimize":
+            # Smooth minimize: hide → switch to standard frame → iconify → show
+            self.withdraw()  # Hide instantly (no flicker)
             self.overrideredirect(False)
-            self.update_idletasks()
             self.iconify()
             self.bind("<Map>", self.on_restore_from_minimize)
         elif action == "maximize":
@@ -97,29 +98,75 @@ class Flow(tk.Tk):
 
     def on_restore_from_minimize(self, event):
         if self.state() == "normal":
-            self.overrideredirect(True)
             self.unbind("<Map>")
+            self.withdraw()  # Hide before switching frame mode
+            self.overrideredirect(True)
+            # Re-apply taskbar style
             try:
                  hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                  style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
-                 style |= 0x00040000
+                 style = style & ~0x00000080  # Remove WS_EX_TOOLWINDOW
+                 style = style | 0x00040000   # Add WS_EX_APPWINDOW
                  ctypes.windll.user32.SetWindowLongW(hwnd, -20, style)
             except:
                  pass
+            self.deiconify()  # Show with frameless mode restored
 
     def toggle_maximize(self):
         if self.is_maximized:
-            self.geometry(self.pre_max_geom)
+            # Restore to previous size — animate
+            self._animate_geometry(self.pre_max_geom)
             self.is_maximized = False
         else:
             self.pre_max_geom = self.geometry()
-            screen_w = self.winfo_screenwidth()
-            screen_h = self.winfo_screenheight()
-            self.geometry(f"{screen_w}x{screen_h}+0+0")
-            self.is_maximized = True
+            # Get usable screen area (excludes taskbar)
+            try:
+                from ctypes import windll, Structure, c_long, byref
+                class RECT(Structure):
+                    _fields_ = [("left", c_long), ("top", c_long),
+                                ("right", c_long), ("bottom", c_long)]
+                rect = RECT()
+                # SPI_GETWORKAREA = 0x0030
+                windll.user32.SystemParametersInfoW(0x0030, 0, byref(rect), 0)
+                x, y = rect.left, rect.top
+                w = rect.right - rect.left
+                h = rect.bottom - rect.top
+            except Exception:
+                x, y = 0, 0
+                w = self.winfo_screenwidth()
+                h = self.winfo_screenheight() - 40  # Rough taskbar estimate
             
-        self.update_idletasks()
-        self.update_idletasks()
+            self._animate_geometry(f"{w}x{h}+{x}+{y}")
+            self.is_maximized = True
+
+    def _animate_geometry(self, target_geom):
+        """Quick 4-step animated resize for smooth transitions."""
+        # Parse current and target
+        import re
+        def parse_geom(g):
+            m = re.match(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)", g)
+            if m:
+                return [int(m.group(i)) for i in range(1, 5)]
+            return None
+        
+        cur = parse_geom(self.geometry())
+        tgt = parse_geom(target_geom)
+        
+        if not cur or not tgt:
+            self.geometry(target_geom)
+            return
+        
+        steps = 5
+        for step in range(1, steps + 1):
+            t = step / steps
+            # Ease-out cubic
+            t_ease = 1 - (1 - t) ** 3
+            w = int(cur[0] + (tgt[0] - cur[0]) * t_ease)
+            h = int(cur[1] + (tgt[1] - cur[1]) * t_ease)
+            x = int(cur[2] + (tgt[2] - cur[2]) * t_ease)
+            y = int(cur[3] + (tgt[3] - cur[3]) * t_ease)
+            self.geometry(f"{w}x{h}+{x}+{y}")
+            self.update_idletasks()
 
     def setup_ui(self):
         # 2. Main Content Area (Background) - Packed FIRST to be behind? 

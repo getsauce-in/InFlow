@@ -100,13 +100,15 @@ cython_debug/
 .DS_Store
 Thumbs.db
 
-# InFlow Personal Data
+# InFlow Personal Data — NEVER COMMIT
 flow.db
 *.db
+data/
+.env
 
 # IDE
 .vscode/
 
-# Local assets (generated icons)
+# Local assets (generated/personal)
 assets/icon.ico
 assets/curriculum.json
