@@ -13,9 +13,11 @@ class BlocksList(tk.Canvas):
         self.edit_vars = {} # Holds StringVars for the inline editor
         
         # Dimensions
-        self.row_h = 110
+        self.min_row_h = 90
+        self.row_h = 90  # default for items without descriptions
         self.content_w = width
         self.total_h = 0
+        self._row_heights = []  # Per-item heights
         
         # Drag Data
         self.drag_data = {"item_index": None, "y_start": 0, "dragging": False}
@@ -36,15 +38,16 @@ class BlocksList(tk.Canvas):
         for w in self.winfo_children():
             w.destroy()
             
-        # Calculate total height dynamically based on expanded state
-        self.total_h = 0
-        for i in range(len(self.items)):
-             if i == self.expanded_idx:
-                 self.total_h += 340 # Expanded height
-             else:
-                 self.total_h += self.row_h
-                 
-        self.total_h = max(self.total_h, 50) # Min height
+        # Calculate per-item row heights
+        self._row_heights = []
+        for i, item in enumerate(self.items):
+            if i == self.expanded_idx:
+                self._row_heights.append(340)
+            else:
+                self._row_heights.append(self._calc_row_h(item))
+        
+        self.total_h = sum(self._row_heights) if self._row_heights else 50
+        self.total_h = max(self.total_h, 50)
         self.configure(height=self.total_h)
         
         # Group Background
@@ -55,7 +58,7 @@ class BlocksList(tk.Canvas):
             current_y = 0
             for i, item in enumerate(self.items):
                 is_expanded = (i == self.expanded_idx)
-                my_h = 340 if is_expanded else self.row_h
+                my_h = self._row_heights[i]
                 y = current_y
                 tag = f"item_{i}"
                 
@@ -75,7 +78,9 @@ class BlocksList(tk.Canvas):
                      self.create_line(0, y + my_h, self.content_w, y + my_h, fill=Colors.SURFACE_3, width=1)
                 
                 # Drag Handle
-                self.create_text(20, y + self.row_h/2, text="⠿", font=("Consolas", 14), fill=Colors.TEXT_TERTIARY, tags=tag)
+                row_h = my_h if not is_expanded else self.min_row_h
+                mid_y = y + 30  # Fixed top anchor for title
+                self.create_text(20, y + row_h/2, text="⠿", font=("Consolas", 14), fill=Colors.TEXT_TERTIARY, tags=tag)
                 
                 # --- PARSE TIME & DATA ---
                 parts = item.title.split(" • ", 1)
@@ -89,41 +94,58 @@ class BlocksList(tk.Canvas):
                 # --- RENDER COLS (Standard Top Row) ---
                 
                 # 1. Time Col
-                self.create_text(40, y + self.row_h/2 - 8, text=t_start.strip(), font=("Consolas", 11, "bold"), fill=Colors.NEON_YELLOW, anchor="w", tags=tag)
-                self.create_text(40, y + self.row_h/2 + 8, text=t_end.strip(), font=("Consolas", 9), fill=Colors.TEXT_TERTIARY, anchor="w", tags=tag)
-                self.create_line(130, y, 130, y+self.row_h, fill=Colors.SURFACE_3)
+                self.create_text(40, y + 28, text=t_start.strip(), font=("Consolas", 11, "bold"), fill=Colors.NEON_YELLOW, anchor="w", tags=tag)
+                self.create_text(40, y + 46, text=t_end.strip(), font=("Consolas", 9), fill=Colors.TEXT_TERTIARY, anchor="w", tags=tag)
+                self.create_line(130, y, 130, y+row_h, fill=Colors.SURFACE_3)
                 
                 # 2. Icon Col
-                self.create_text(155, y + self.row_h/2, text=item.icon, font=("Segoe UI Emoji", 18), fill=Colors.NEON_YELLOW, tags=tag)
-                self.create_line(180, y, 180, y+self.row_h, fill=Colors.SURFACE_3)
+                self.create_text(155, y + 35, text=item.icon, font=("Segoe UI Emoji", 18), fill=Colors.NEON_YELLOW, tags=tag)
+                self.create_line(180, y, 180, y+row_h, fill=Colors.SURFACE_3)
                 
-                # 3. Label Col
-                self.create_text(196, y + self.row_h/2 - 16, text=real_t, font=("Segoe UI", 13, "bold"), fill=Colors.TEXT_PRIMARY, anchor="w", tags=tag)
+                # 3. Label Col — title at fixed top, description flows below
+                self.create_text(196, y + 22, text=real_t, font=("Segoe UI", 13, "bold"), fill=Colors.TEXT_PRIMARY, anchor="w", tags=tag)
                 
                 sub = item.description if hasattr(item, 'description') else ""
                 if sub:
-                    self.create_text(196, y + self.row_h/2 + 14, text=sub, font=("Consolas", 9), fill="#EEF2FF", anchor="w", width=460, tags=tag)
+                    self.create_text(196, y + 42, text=sub, font=("Consolas", 9), fill="#EEF2FF", anchor="nw", width=460, tags=tag)
 
                 # 4. Duration Pill
                 is_long = item.duration >= 45
                 p_col = Colors.NEON_YELLOW if is_long else Colors.TEXT_TERTIARY
                 
                 pill_cx = self.content_w - 90
-                self.create_rectangle(pill_cx - 34, y + self.row_h/2 - 12, pill_cx + 34, y + self.row_h/2 + 12, outline=p_col, fill="#1c1810" if is_long else "", tags=tag)
-                self.create_text(pill_cx, y + self.row_h/2, text=f"{item.duration} min", font=("Consolas", 10, "bold"), fill=p_col, tags=tag)
-                self.create_line(self.content_w - 46, y, self.content_w - 46, y+self.row_h, fill=Colors.SURFACE_3)
+                self.create_rectangle(pill_cx - 34, y + 24, pill_cx + 34, y + 48, outline=p_col, fill="#1c1810" if is_long else "", tags=tag)
+                self.create_text(pill_cx, y + 36, text=f"{item.duration} min", font=("Consolas", 10, "bold"), fill=p_col, tags=tag)
+                self.create_line(self.content_w - 46, y, self.content_w - 46, y+row_h, fill=Colors.SURFACE_3)
                 
-                # 5. Config/Toggle Col (Replaces Delete)
+                # 5. Config/Toggle Col
                 cfg_tag = f"cfg_{i}"
-                self.create_text(self.content_w - 23, y + self.row_h/2, text="▲" if is_expanded else "▼", font=("Segoe UI", 10), fill=Colors.TEXT_TERTIARY, tags=(cfg_tag, "btn_cfg"))
+                self.create_text(self.content_w - 23, y + 36, text="▲" if is_expanded else "▼", font=("Segoe UI", 10), fill=Colors.TEXT_TERTIARY, tags=(cfg_tag, "btn_cfg"))
                 
                 # --- INLINE EXPANDED RENDER ---
                 if is_expanded:
-                    self._render_inline_editor(i, item, y + self.row_h)
+                    self._render_inline_editor(i, item, y + self._calc_row_h(item))
 
                 self.tag_bind(tag, "<Button-1>", lambda e, idx=i: self.on_start_drag(e, idx))
                 
                 current_y += my_h
+
+    def _calc_row_h(self, item):
+        """Calculate dynamic row height based on description length."""
+        desc = getattr(item, 'description', '') or ''
+        desc_len = len(desc)
+        if desc_len == 0:
+            return 70
+        elif desc_len < 60:
+            return 80
+        elif desc_len < 120:
+            return 100
+        elif desc_len < 200:
+            return 120
+        else:
+            # Roughly 14px per line at width=460, ~55 chars/line at font size 9
+            lines = max(1, desc_len // 55) + 1
+            return max(120, 42 + lines * 16)
 
     def _render_inline_editor(self, idx, item, y_start):
         import tkinter as tk
@@ -257,7 +279,7 @@ class BlocksList(tk.Canvas):
         idx = -1
         cy = 0
         for i in range(len(self.items)):
-            h = 340 if i == self.expanded_idx else self.row_h
+            h = self._row_heights[i] if i < len(self._row_heights) else self.min_row_h
             if cy <= y < cy + h:
                 idx = i
                 break
@@ -288,7 +310,7 @@ class BlocksList(tk.Canvas):
          idx = -1
          cy = 0
          for i in range(len(self.items)):
-             h = 340 if i == self.expanded_idx else self.row_h
+             h = self._row_heights[i] if i < len(self._row_heights) else self.min_row_h
              if cy <= y < cy + h:
                  idx = i
                  break

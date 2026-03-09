@@ -1,6 +1,16 @@
 import os
+import sys
 from dotenv import load_dotenv
 load_dotenv()  # Load .env before anything else
+
+# Windows: Set AppUserModelID BEFORE importing Tkinter
+# This tells Windows to treat InFlow as its own app (not grouped under python.exe)
+# which allows the custom icon to show in the taskbar
+try:
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("inflow.app.1.0")
+except Exception:
+    pass
 
 from app import Flow
 import time

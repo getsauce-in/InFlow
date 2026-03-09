@@ -38,6 +38,23 @@ class Flow(tk.Tk):
         except Exception:
              pass
         
+        # Windows Taskbar Fix — force frameless window to appear in taskbar
+        try:
+            import ctypes
+            GWL_EXSTYLE = -20
+            WS_EX_APPWINDOW = 0x00040000
+            WS_EX_TOOLWINDOW = 0x00000080
+            hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            style = style & ~WS_EX_TOOLWINDOW  # Remove "tool window" (hidden from taskbar)
+            style = style | WS_EX_APPWINDOW     # Add "app window" (visible in taskbar)
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+            # Re-show to apply
+            self.withdraw()
+            self.after(10, self.deiconify)
+        except Exception:
+            pass
+        
         # Initial Geometry
         self.window_w = Metrics.WINDOW_WIDTH
         self.window_h = Metrics.WINDOW_HEIGHT
